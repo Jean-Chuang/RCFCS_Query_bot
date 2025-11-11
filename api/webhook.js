@@ -47,15 +47,15 @@ async function loadRulesFromSheet() {
       const line = lines[i].trim();
       if (!line) continue;
       
-      // 處理 CSV 格式
-      const parts = line.split(',');
-      if (parts.length >= 2) {
-        const keyword = parts[0].replace(/"/g, '').toLowerCase().trim();
-        const reply = parts.slice(1).join(',').replace(/"/g, '').trim();
-        if (keyword && reply) {
-          rules[keyword] = reply;
-        }
-      }
+// 改進的 CSV 解析（支援引號和逗號）
+const match = line.match(/^"?([^",]+)"?\s*,\s*"?(.+?)"?\s*$/);
+if (match && match.length === 3) {
+  const keyword = match[1].toLowerCase().trim();
+  const reply = match[2].trim();
+  if (keyword && reply) {
+    rules[keyword] = reply;
+  }
+}
     }
     
     console.log('Loaded rules:', rules);
