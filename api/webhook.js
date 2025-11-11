@@ -15,15 +15,18 @@ export default async function handler(req, res) {
     const chatId = message.chat.id;
     const userText = message.text.toLowerCase().trim();
     
-    // 從 Google Sheets 讀取規則
-    const rules = await loadRulesFromSheet();
-    
-    // 精確匹配
-    if (rules[userText]) {
-      await sendMessage(chatId, rules[userText]);
-    }
-    
-    return res.status(200).json({ ok: true });
+// 從 Google Sheets 讀取規則
+const rules = await loadRulesFromSheet();
+
+// 精確匹配
+if (rules[userText]) {
+  await sendMessage(chatId, rules[userText]);
+} else {
+  // 無法識別時的預設回覆
+  await sendMessage(chatId, '俺不懂你说啥😵‍💫');
+}
+
+return res.status(200).json({ ok: true });
   } catch (error) {
     console.error('Error:', error);
     return res.status(200).json({ ok: true });
