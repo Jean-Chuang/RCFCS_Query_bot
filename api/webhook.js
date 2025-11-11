@@ -15,18 +15,18 @@ export default async function handler(req, res) {
     const chatId = message.chat.id;
     const userText = message.text.toLowerCase().trim();
     
-// 從 Google Sheets 讀取規則
-const rules = await loadRulesFromSheet();
-
-// 精確匹配
-if (rules[userText]) {
-  await sendMessage(chatId, rules[userText]);
-} else {
-  // 無法識別時的預設回覆
-  await sendMessage(chatId, '俺不懂你说啥😵‍💫');
-}
-
-return res.status(200).json({ ok: true });
+    // 從 Google Sheets 讀取規則
+    const rules = await loadRulesFromSheet();
+    
+    // 精確匹配
+    if (rules[userText]) {
+      await sendMessage(chatId, rules[userText]);
+    } else {
+      // 無法識別時的預設回覆
+      await sendMessage(chatId, '俺不懂你说啥 么');
+    }
+    
+    return res.status(200).json({ ok: true });
   } catch (error) {
     console.error('Error:', error);
     return res.status(200).json({ ok: true });
@@ -50,15 +50,15 @@ async function loadRulesFromSheet() {
       const line = lines[i].trim();
       if (!line) continue;
       
-// 改進的 CSV 解析（支援引號和逗號）
-const match = line.match(/^"?([^",]+)"?\s*,\s*"?(.+?)"?\s*$/);
-if (match && match.length === 3) {
-  const keyword = match[1].toLowerCase().trim();
-  const reply = match[2].trim();
-  if (keyword && reply) {
-    rules[keyword] = reply;
-  }
-}
+      // 處理 CSV 格式
+      const parts = line.split(',');
+      if (parts.length >= 2) {
+        const keyword = parts[0].replace(/"/g, '').toLowerCase().trim();
+        const reply = parts.slice(1).join(',').replace(/"/g, '').trim();
+        if (keyword && reply) {
+          rules[keyword] = reply;
+        }
+      }
     }
     
     console.log('Loaded rules:', rules);
@@ -69,7 +69,7 @@ if (match && match.length === 3) {
   }
 }
 
-// 發送訊息到 Telegram
+// 發送訊息到 Telegram（帶複製按鈕）
 async function sendMessage(chatId, text) {
   const BOT_TOKEN = process.env.BOT_TOKEN;
   const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
@@ -77,13 +77,28 @@ async function sendMessage(chatId, text) {
   // 將 \n 替換為真實換行符
   const formattedText = text.replace(/\\n/g, '\n');
   
+  // 創建複製按鈕
+  const replyMarkup = {
+    inline_keyboard: [
+      [
+        {
+          text: '📋 Copy',
+          copy_text: {
+            text: formattedText
+          }
+        }
+      ]
+    ]
+  };
+  
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
-        text: formattedText  // 使用處理過的文字
+        text: formattedText,
+        reply_markup: replyMarkup
       })
     });
     
