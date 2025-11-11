@@ -20,10 +20,11 @@ export default async function handler(req, res) {
     
     // 精確匹配
     if (rules[userText]) {
-      await sendMessage(chatId, rules[userText]);
+      // 找到匹配 - 發送帶 Copy 按鈕的訊息
+      await sendMessageWithCopy(chatId, rules[userText]);
     } else {
-      // 無法識別時的預設回覆
-      await sendMessage(chatId, '俺不懂你说啥 么');
+      // 無法識別 - 發送普通訊息（無 Copy 按鈕）
+      await sendSimpleMessage(chatId, '俺不懂你说啥😵‍💫');
     }
     
     return res.status(200).json({ ok: true });
@@ -69,8 +70,8 @@ async function loadRulesFromSheet() {
   }
 }
 
-// 發送訊息到 Telegram（帶複製按鈕）
-async function sendMessage(chatId, text) {
+// 發送訊息（帶 Copy 按鈕）- 用於找到匹配的回覆
+async function sendMessageWithCopy(chatId, text) {
   const BOT_TOKEN = process.env.BOT_TOKEN;
   const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
   
@@ -99,6 +100,29 @@ async function sendMessage(chatId, text) {
         chat_id: chatId,
         text: formattedText,
         reply_markup: replyMarkup
+      })
+    });
+    
+    if (!response.ok) {
+      console.error('Telegram API error:', await response.text());
+    }
+  } catch (error) {
+    console.error('Failed to send message:', error);
+  }
+}
+
+// 發送普通訊息（無 Copy 按鈕）- 用於錯誤訊息
+async function sendSimpleMessage(chatId, text) {
+  const BOT_TOKEN = process.env.BOT_TOKEN;
+  const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: text
       })
     });
     
