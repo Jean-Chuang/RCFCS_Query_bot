@@ -47,7 +47,7 @@ async function loadRulesFromSheet() {
       const line = lines[i].trim();
       if (!line) continue;
       
-      // 處理 CSV 格式（支援包含逗號的內容）
+      // 處理 CSV 格式
       const parts = line.split(',');
       if (parts.length >= 2) {
         const keyword = parts[0].replace(/"/g, '').toLowerCase().trim();
